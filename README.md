@@ -1,1 +1,1 @@
-StoSpotter
+# ShotSpotter - Photographer Booking App
