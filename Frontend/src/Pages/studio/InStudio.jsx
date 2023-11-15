@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Outlet, Link, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import './InStudio.css';
 import Navbar from '../common/Navbar';
-import About from './About';
-import Albums from './Albums';
-import Packages from './Packages';
-import Reviews from './Reviews';
+import Footer from '../common/Footer';
 
-const InStudio = ({baseURL}) => {
+const InStudio = ({ baseURL }) => {
 
-  const { studioID } = useParams();
+  const { studio_id } = useParams();
   const navigate = useNavigate();
   const [photographer, setPhotographer] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -18,45 +15,56 @@ const InStudio = ({baseURL}) => {
 
   useEffect(() => {
     // Set the document title
-    document.title = photographer ? photographer.name : 'Loading...';
+    document.title = photographer ? photographer.profile : 'Loading...';
   }, [photographer]);
 
   useEffect(() => {
-    const fetchPhotographerData = async () => {
-      try {
-        const response = await fetch(`${baseURL}/studio/${studioID}`);
-        const data = await response.json();
-        setPhotographer(data);
-      } catch (error) {
-        console.error('Error fetching photographer data:', error);
+    const token = localStorage.getItem('token');
+    fetch(`${baseURL}/studio/${studio_id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token
       }
-    };
-
-    fetchPhotographerData();
-  }, [studioID]);
+    })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then((data) => {
+      setPhotographer(data.photographer);
+      console.log(data);
+    })
+    .catch((error) => {
+      console.log(error);
+      setErrorMessage('An error occurred while fetching data.');
+    });
+  }, [studio_id]);
 
   const handleBook = async (e) => {
     e.preventDefault();
-
+    const token = localStorage.getItem('token');
+    const userData = JSON.parse(localStorage.getItem('userData'));
     try {
       const response = await fetch(`${baseURL}/bookings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
         body: JSON.stringify({
-          customerContact: 'customer@example.com',
-          client: 'clientID', // Replace with the actual client ID
-          photographerId: photographer._id,
+          customerContact: userData.email,
+          photographer: studio_id,
           startTime: date1,
           endTime: date2
         })
       });
 
       if (response.ok) {
-        // Booking successful
         alert('Booking Successful');
-        navigate('/bookings');
+        // navigate('/bookings');
       } else {
-        // Booking failed, display error message
         const errorData = await response.json();
         setErrorMessage(errorData.msg);
         alert(errorMessage);
@@ -68,75 +76,55 @@ const InStudio = ({baseURL}) => {
     }
   };
 
-  if (!photographer) {
-    return <div id='loading'>Loading...</div>; // Show a loading indicator while fetching the data
-  }
+
 
   return (
     <div>
       <Navbar />
-      <div id="photographer-info" style={{ display: 'flex' }}>
-        <div>
-          {/* Photographer image */}
-          <img src={photographer.image} alt="Photographer" style={{ borderRadius: '50%', width: '150px', height: '150px' }} />
-        </div>
-        <div>
-          {/* Photographer details */}
-          <h1>{photographer.name}</h1>
-          <p>{photographer.city} - {photographer.address}</p>
-          <p>Phone: {photographer.phoneNumber}</p>
+      {photographer ? (
+        <div id="photographer-info" style={{ display: 'flex' }}>
+          <img src={photographer.image} alt="Photographer" style={{ borderRadius: '10px', height: '250px', aspectRatio: '5/3' }} />
           <div>
-            {/* Render categories as bubbles */}
-            {photographer.categories.map((category, index) => (
-              <span key={index} style={{ display: 'inline-block', padding: '5px', margin: '5px', backgroundColor: '#ccc', borderRadius: '5px' }}>{category}</span>
-            ))}
+            {/* Photographer details */}
+            <h2 style={{textAlign: 'left'}}>{photographer.name}</h2>
+            <h1>{photographer.profile}</h1>
+            <div>
+              {/* Render location as bubbles */}
+              {photographer.location.map((loc, ind) => (
+                <span key={ind} style={{ padding: '10px 20px', backgroundColor: '#ffd', borderRadius: '5px' }}>{loc}</span>
+              ))}
+            </div>
+            <div>
+              {/* Render categories as bubbles */}
+              {photographer.expertise.map((category, index) => (
+                <span key={index} style={{ padding: '10px 20px', backgroundColor: '#ddf', borderRadius: '5px' }}>{category}</span>
+              ))}
+            </div>
+            <h3>Price: ₹{photographer.price}</h3>
           </div>
-          <p>
-            Rating: {photographer.rating} <span>&#10084;</span>
-            Followers: {photographer.followers} <span>&#128172;</span>
-            Reviews: {photographer.reviews} <span>&#128172;</span>
-          </p>
         </div>
-      </div>
+      ) : (
+        <p id='loading'>Loading photographer data...</p>
+      )}
+
 
       <div className="booking-form-container">
-      <form onSubmit={handleBook} className="booking-form">
-        <div className="form-group">
-          <label htmlFor="startDate" className="form-label">Start Date:</label>
-          <input type="date" name="date1" id="date1" onChange={(e) => setDate1(e.target.value)} className="form-input" />
-        </div>
+        <h3>Choose your date and make memories with us</h3>
+        <form onSubmit={handleBook} className="booking-form">
+          <div className="form-group">
+            <label htmlFor="startDate" className="form-label">Start Date:</label>
+            <input type="date" name="date1" id="date1" onChange={(e) => setDate1(e.target.value)} className="form-input" />
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="endDate" className="form-label">End Date:</label>
-          <input type="date" name="date2" id="date2" onChange={(e) => setDate2(e.target.value)} className="form-input" />
-        </div>
+          <div className="form-group">
+            <label htmlFor="endDate" className="form-label">End Date:</label>
+            <input type="date" name="date2" id="date2" onChange={(e) => setDate2(e.target.value)} className="form-input" />
+          </div>
 
-        <button type="submit" className="book-button">Book</button>
-      </form>
-    </div>
-
-      <div id="buttons">
-        <Link to={`/studio/${studioID}/about`}>
-          <button>About</button>
-        </Link>
-        <Link to={`/studio/${studioID}/albums`}>
-          <button>Albums</button>
-        </Link>
-        <Link to={`/studio/${studioID}/packages`}>
-          <button>Packages</button>
-        </Link>
-        <Link to={`/studio/${studioID}/reviews`}>
-          <button>Reviews</button>
-        </Link>
+          <button type="submit" className="book-button">Book</button>
+        </form>
       </div>
-
-      <Routes>
-        <Route path="about" element={<About photographer={photographer}/>} />
-        <Route path="albums" element={<Albums />} />
-        <Route path="packages" element={<Packages />} />
-        <Route path="reviews" element={<Reviews />} />
-      </Routes>
-      <Outlet /> {/* This will render the nested component based on the current route */}
+      <Footer />
     </div>
   );
 };
