@@ -33,8 +33,6 @@ ShotSpotter is a platform where users can discover and book photographers for va
 - Frontend:
   - React
   - CSS
-  - TailwindCSS
-  - ShadCNUI
 
 - Backend:
   - NodeJS
