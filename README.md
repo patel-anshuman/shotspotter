@@ -1,4 +1,4 @@
-# ShotSpotter: Photographer Booking Web App
+# 📸 ShotSpotter: Photographer Booking Web App
 
 ShotSpotter is the ultimate web app for seamless photographer bookings. Find the perfect photographer for any occasion, choose your preferred location, and stay on budget. Picture-perfect memories, just a click away.
 
